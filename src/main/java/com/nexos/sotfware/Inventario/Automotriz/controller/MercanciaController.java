@@ -3,13 +3,17 @@ package com.nexos.sotfware.Inventario.Automotriz.controller;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import com.nexos.sotfware.Inventario.Automotriz.dtos.MercanciaRequest;
+import com.nexos.sotfware.Inventario.Automotriz.dtos.MercanciaResponse;
 import com.nexos.sotfware.Inventario.Automotriz.entities.Mercancia;
 import com.nexos.sotfware.Inventario.Automotriz.exceptiones.InventarioException;
 import com.nexos.sotfware.Inventario.Automotriz.service.MercanciaService;
@@ -22,34 +26,64 @@ public class MercanciaController {
    private final MercanciaService service;
 
    @PostMapping("/registrar")
-   public Mercancia registrar(@RequestBody MercanciaRequest request) {
-      return service.registrarMercancia(request.getNombreProducto(), request.getCantidad(), request.getFechaIngreso(), request.getIdUsuario());
+   public ResponseEntity<?> registrar(@RequestBody MercanciaRequest request) {
+      Mercancia nueva =  service.registrarMercancia(request.getNombreProducto(), request.getCantidad(), request.getFechaIngreso(), request.getIdUsuario());
+      return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(Map.of(
+                  "mensaje", "Mercancía registrada correctamente",
+                  "mercancia", nueva
+            ));
    }
 
    @PutMapping("/editar")
-   public Mercancia editar(@RequestBody MercanciaRequest request) {
-      return service.editarMercancia(request.getId(), request.getIdUsuarioModifico(), request.getNombreProducto(), request.getCantidad());
+   public ResponseEntity<?> editar(@RequestBody MercanciaRequest request) {
+      Mercancia actualizada = service.editarMercancia(request.getId(), request.getIdUsuarioModifico(), request.getNombreProducto(), request.getCantidad());
+
+      return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(Map.of(
+                  "mensaje", "Datos actualizados correctamente",
+                  "mercancia", actualizada
+            ));
    }
 
    @DeleteMapping("/eliminar")
-   public String eliminar(@RequestParam Long idMercancia, @RequestParam Long idUsuario) {
-      service.eliminarMercancia(idMercancia, idUsuario);
-      return "Mercancía eliminada correctamente";
+   public ResponseEntity<?> eliminar(@RequestParam Long idMercancia, @RequestParam Long idUsuario) {
+      Mercancia delete = service.eliminarMercancia(idMercancia, idUsuario);
+      return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(Map.of(
+                  "mensaje", "Mercancía eliminada correctamente",
+                  "mercancia", delete
+            ));
+
    }
 
    @GetMapping("/buscar")
    public ResponseEntity<List<Mercancia>> buscarMercancia(
          @RequestParam(required = false) String nombre,
-         @RequestParam(required = false) Long idUsuario,
+         @RequestParam(required = false) String nombreUsuario,
          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaIngreso) {
 
-      // Validar que al menos un filtro esté presente
-      if (nombre == null && idUsuario == null && fechaIngreso == null) {
-         throw new InventarioException("Debe proporcionar al menos un filtro: nombre, idUsuario o fechaIngreso");
-      }
 
-      List<Mercancia> resultados = service.buscarPorFiltros(nombre, idUsuario, fechaIngreso);
+      List<Mercancia> resultados = service.buscarPorFiltros(nombre, nombreUsuario, fechaIngreso);
       return ResponseEntity.ok(resultados);
+   }
+   @GetMapping("/con/{id}")
+   public ResponseEntity<MercanciaResponse> buscarPorId(@PathVariable Long id) {
+      MercanciaResponse respuesta = service.buscarPorId(id);
+      if (respuesta != null) {
+         return ResponseEntity.ok(respuesta);
+      } else {
+         return ResponseEntity.notFound().build();
+      }
+   }
+
+   @GetMapping("/listar-todo")
+   public ResponseEntity<List<Mercancia>> listarTodaLaMercancia() {
+      List<Mercancia> lista = service.listarTodo();
+      return ResponseEntity.ok(lista);
    }
 
 

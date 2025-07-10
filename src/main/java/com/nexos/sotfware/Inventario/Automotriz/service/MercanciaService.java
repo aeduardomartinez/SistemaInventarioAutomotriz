@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.nexos.sotfware.Inventario.Automotriz.Specification.MercanciaSpecification;
 import com.nexos.sotfware.Inventario.Automotriz.dtos.MercanciaMapper;
 import com.nexos.sotfware.Inventario.Automotriz.dtos.MercanciaRequest;
 import com.nexos.sotfware.Inventario.Automotriz.dtos.MercanciaResponse;
@@ -31,7 +32,7 @@ public class MercanciaService {
 
    private final HistorialMovimientoRepository historialRepository;
 
-   private final MercanciaMapper mercanciaMapper;
+   private final MercanciaMapper mapper;
 
    public Mercancia registrarMercancia(String nombreProducto, int cantidad, LocalDate fechaIngreso, Long idUsuario) {
       if (mercanciaRepository.existsByNombreProducto(nombreProducto)) {
@@ -78,11 +79,15 @@ public class MercanciaService {
          throw new InventarioException("Datos inválidos para actualizar mercancía");
       }
 
+      if (nuevaCantidad <= 0) {
+         throw new InventarioException("La cantidad debe ser mayor que cero");
+      }
+
       mercancia.setId(id);
       mercancia.setNombreProducto(nuevoNombre);
       mercancia.setCantidad(nuevaCantidad);
-      mercancia.setFechaModificacion(LocalDate.now()); // como fecha de modificación
-      mercancia.setUsuarioModifico(usuario); // ✅ Se guarda quien la modificó
+      mercancia.setFechaModificacion(LocalDate.now());
+      mercancia.setUsuarioModifico(usuario);
 
       Mercancia actualizada = mercanciaRepository.save(mercancia);
 
@@ -97,29 +102,43 @@ public class MercanciaService {
       return actualizada;
    }
 
-
    @Transactional
-   public void eliminarMercancia(Long idMercancia, Long idUsuario) {
-      Mercancia mercancia = mercanciaRepository.findById(idMercancia)
-                                               .orElseThrow(() -> new InventarioException("Mercancía no encontrada"));
+   public Mercancia eliminarMercancia(Long idMercancia, Long idUsuario) {
+      Mercancia mercancia = mercanciaRepository.findById(idMercancia).orElseThrow(() -> new InventarioException("Mercancía no encontrada"));
 
       if (!mercancia.getUsuarioRegistro().getId().equals(idUsuario)) {
          throw new InventarioException("No puedes eliminar esta mercancía porque no eres quien la registró.");
       }
 
       // Opcional: registrar en el historial antes de eliminar
-      historialRepository.save(HistorialMovimiento.builder()
-                                                  .tipoAccion(TipoAccion.ELIMINACION)
-                                                  .fechaAccion(LocalDateTime.now())
-                                                  .mercancia(mercancia)
-                                                  .usuarioAccion(mercancia.getUsuarioRegistro())
-                                                  .build());
+      historialRepository.save(HistorialMovimiento
+            .builder()
+            .tipoAccion(TipoAccion.ELIMINACION)
+            .fechaAccion(LocalDateTime.now())
+            .mercancia(mercancia)
+            .usuarioAccion(mercancia.getUsuarioRegistro())
+            .build());
 
       mercanciaRepository.deleteById(idMercancia);
-   }
-   public List<Mercancia> buscarPorFiltros(String nombre, Long idUsuario, LocalDate fechaIngreso) {
-      return mercanciaRepository.findByFiltros(nombre, idUsuario, fechaIngreso);
+      return mercancia;
    }
 
+   public List<Mercancia> buscarPorFiltros(String nombre, String nombreUsuario, LocalDate fechaIngreso) {
+      if (nombre == null && nombreUsuario == null && fechaIngreso == null) {
+         throw new InventarioException("Debe proporcionar al menos un filtro");
+      }
+
+      return mercanciaRepository.findAll(MercanciaSpecification.filtros(nombre, nombreUsuario, fechaIngreso));
+   }
+
+   public MercanciaResponse buscarPorId(Long id) {
+      Mercancia mercancia = mercanciaRepository.findById(id).orElseThrow(() -> new InventarioException("Mercancía no encontrada con ID: " + id));
+
+      return mapper.toResponse(mercancia);
+   }
+
+   public List<Mercancia> listarTodo() {
+      return mercanciaRepository.findAll();
+   }
 
 }

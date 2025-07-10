@@ -30,8 +30,7 @@ public class Mercancia {
    @GeneratedValue(strategy = GenerationType.IDENTITY)
    private Long id;
 
-   @Column(unique = true, nullable = false)
-   @JoinColumn(name = "nombre_producto")
+   @Column(nullable = false)
    private String nombreProducto;
 
    private int cantidad;

@@ -11,35 +11,35 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nexos.sotfware.Inventario.Automotriz.dtos.ApiResponse;
-import com.nexos.sotfware.Inventario.Automotriz.dtos.UsuarioRequest;
-import com.nexos.sotfware.Inventario.Automotriz.dtos.UsuarioResponse;
+import com.nexos.sotfware.Inventario.Automotriz.dtos.CargoRequest;
+import com.nexos.sotfware.Inventario.Automotriz.dtos.CargoResponse;
+import com.nexos.sotfware.Inventario.Automotriz.entities.Cargo;
 import com.nexos.sotfware.Inventario.Automotriz.entities.Usuario;
-import com.nexos.sotfware.Inventario.Automotriz.service.UsuarioService;
+import com.nexos.sotfware.Inventario.Automotriz.service.CargoService;
 
 import lombok.RequiredArgsConstructor;
 
-// Controlador para el CRUD de usuarios
 @RestController
-@RequestMapping("/api/usuarios")
+@RequestMapping("/cargo")
 @RequiredArgsConstructor
-public class UsuarioController {
+public class CargoController {
 
-   private final UsuarioService usuarioService;
+   private final CargoService cargoService;
 
    @PostMapping("/registrar")
-   public ResponseEntity<ApiResponse<UsuarioResponse>> registrar(@RequestBody UsuarioRequest request) {
-      UsuarioResponse response = usuarioService.crearUsuario(request);
-      ApiResponse<UsuarioResponse> resultado = ApiResponse
-            .<UsuarioResponse>builder()
-            .mensaje("Usuario registrado correctamente!!!")
+   public ResponseEntity<ApiResponse<CargoResponse>> registrar(@RequestBody CargoRequest request) {
+      CargoResponse response = cargoService.crearCargo(request);
+      ApiResponse<CargoResponse> resultado = ApiResponse
+            .<CargoResponse>builder()
+            .mensaje("Cargo registrado correctamente!!!")
             .datos(response)
             .build();
       return ResponseEntity.status(HttpStatus.CREATED).body(resultado);
    }
 
    @GetMapping
-   public ResponseEntity<List<Usuario>> listarUsuarios() {
-      List<Usuario> usuarios = usuarioService.listarTodos();
-      return ResponseEntity.ok(usuarios);
+   public ResponseEntity<List<Cargo>> listarUsuarios() {
+      List<Cargo> cargos = cargoService.listarTodos();
+      return ResponseEntity.ok(cargos);
    }
 }

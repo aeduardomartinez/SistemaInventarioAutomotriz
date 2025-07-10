@@ -11,7 +11,7 @@ public class UsuarioRequest {
 
    private int edad;
 
-   private String cargo;
-
    private LocalDate fechaIngreso;
+
+   private Long idCargo;
 }
